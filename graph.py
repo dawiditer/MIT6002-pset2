@@ -57,16 +57,24 @@ class Edge(object):
 
 class WeightedEdge(Edge):
     def __init__(self, src, dest, total_distance, outdoor_distance):
-        pass  # TODO
+        Edge.__init__(self, src, dest)
+        self.total_distance = total_distance
+        self.outdoor_distance = outdoor_distance
+
+        self._check_rep()
+        
+    def _check_rep(self):
+        assert self.total_distance >= self.outdoor_distance
 
     def get_total_distance(self):
-        pass  # TODO
-
+        return self.total_distance
+    
     def get_outdoor_distance(self):
-        pass  # TODO
+        return self.outdoor_distance
 
     def __str__(self):
-        pass  # TODO
+        return Edge.__str__(self) +\
+               ' ({}, {})'.format(self.total_distance, self.outdoor_distance)
 
 
 class Digraph(object):
@@ -156,5 +164,5 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(str(self.g), expected)
 
 
-if __name__ == "__main__":
-    unittest.main()
+##if __name__ == "__main__":
+##    unittest.main()
