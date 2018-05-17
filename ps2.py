@@ -20,6 +20,10 @@ from graph import Digraph, Node, WeightedEdge
 # represented?
 #
 # Answer:
+# - Nodes represent the buidlings
+# - Edges represent the connection between two buildings
+# - Distances are represented as the weights of the edges
+#   as the tuple (total distance, distance outdoors)
 #
 
 
@@ -42,10 +46,29 @@ def load_map(map_filename):
     Returns:
         a Digraph representing the map
     """
+    mit_map = Digraph()
+    
+    with open(map_filename) as f:
+        for line in f:
+            edge_details = line.split(" ")
 
-    # TODO
+            src = Node(edge_details[0])
+            dest = Node(edge_details[1])
+            total_distance = int(edge_details[2])
+            outdoor_distance = int(edge_details[3])
+            
+            edge = WeightedEdge(src, dest, total_distance, outdoor_distance)
+
+            if not mit_map.has_node(src):
+                mit_map.add_node(src)
+            if not mit_map.has_node(dest):
+                mit_map.add_node(dest)
+                
+            mit_map.add_edge(edge)
+
     print("Loading map from file...")
-
+    return mit_map
+    
 # Problem 2c: Testing load_map
 # Include the lines used to test load_map below, but comment them out
 
