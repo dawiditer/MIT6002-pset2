@@ -76,12 +76,12 @@ class WeightedEdge(Edge):
         return Edge.__str__(self) +\
                ' ({}, {})'.format(self.total_distance, self.outdoor_distance)
 
-
+#Uses Adjacency List representation
 class Digraph(object):
     """Represents a directed graph of Node and Edge objects"""
     def __init__(self):
         self.nodes = set([])
-        self.edges = {}  # must be a dict of Node -> list of edges
+        self.edges = {}  # must be a dict of Node -> list of edges ie, node and edges its in as a source
 
     def __str__(self):
         edge_strs = []
@@ -100,13 +100,24 @@ class Digraph(object):
     def add_node(self, node):
         """Adds a Node object to the Digraph. Raises a ValueError if it is
         already in the graph."""
-        pass  # TODO
+
+        if self.has_node(node):
+            raise ValueError("Node already in graph")
+        
+        self.nodes.add(node)
 
     def add_edge(self, edge):
         """Adds an Edge or WeightedEdge instance to the Digraph. Raises a
         ValueError if either of the nodes associated with the edge is not
         in the  graph."""
-        pass  # TODO
+        source = edge.get_source()
+        dest = edge.get_destination()
+        
+        if not (self.has_node(source) and self.has_node(dest)):
+            raise ValueError("Either or both of the nodes are not in this graph")
+
+        self.edges[source] = self.edges.get(source, [])
+        self.edges[source].append(edge)
 
 
 # ================================================================
@@ -164,5 +175,5 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(str(self.g), expected)
 
 
-##if __name__ == "__main__":
-##    unittest.main()
+if __name__ == "__main__":
+    unittest.main()
