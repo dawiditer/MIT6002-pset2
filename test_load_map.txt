@@ -1,0 +1,6 @@
+seek to 0 0
+to explore 0 0
+explore new 0 1
+new and 2 1
+and exciting 1 0
+exciting synergies 0 0   

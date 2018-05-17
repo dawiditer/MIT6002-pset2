@@ -61,7 +61,7 @@ class WeightedEdge(Edge):
         self.total_distance = total_distance
         self.outdoor_distance = outdoor_distance
 
-        self._check_rep()
+        #self._check_rep()
         
     def _check_rep(self):
         assert self.total_distance >= self.outdoor_distance

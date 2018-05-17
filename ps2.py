@@ -71,6 +71,13 @@ def load_map(map_filename):
     
 # Problem 2c: Testing load_map
 # Include the lines used to test load_map below, but comment them out
+##def test_load_map():
+##    test_map = load_map("test_load_map.txt")
+##        
+##    assert test_map
+##    print(test_map)
+##    
+##test_load_map()
 
 
 #
@@ -239,5 +246,5 @@ class Ps2Test(unittest.TestCase):
         self._test_impossible_path('10', '32', total_dist=100)
 
 
-if __name__ == "__main__":
-    unittest.main()
+##if __name__ == "__main__":
+##    unittest.main()
