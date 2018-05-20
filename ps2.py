@@ -144,8 +144,7 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist, best
     if not (digraph.has_node(start) and digraph.has_node(end)):
         raise ValueError("Invalid start and/or end nodes")
 
-    path = path + [start]
-    print("Current path:", printPath(path), total_dist)
+    path = path + [start.get_name()]
     if start == end:
         return path, total_dist
 
@@ -153,14 +152,14 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist, best
 ##    if max_dist_outdoors <= 0:
 ##        return None
     
-    if max_dist_outdoors > 0:
+    if max_dist_outdoors >= 0:
         for edge in digraph.get_edges_for_node(start):
             child_node = edge.get_destination()
             outdoor_dist = edge.get_outdoor_distance()
             dist_travelled = edge.get_total_distance()
             
-            if child_node not in path and outdoor_dist <= max_dist_outdoors:
-                if best_dist == 0 or total_dist < best_dist:
+            if (child_node.get_name() not in path and outdoor_dist <= max_dist_outdoors):
+                if best_dist == 0 or (total_dist < best_dist and len(path) <= len(best_path)):
                     #This evaluates to the best path. Only enter here for the best
                     #path
                     newPathDist = get_best_path(digraph, child_node, end, path,
@@ -169,7 +168,8 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist, best
                                                 best_dist, best_path)
 
                     if newPathDist != None:
-                        best_path, best_dist = newPathDist
+                        if (best_dist and newPathDist[1] < best_dist) or not best_dist:
+                            best_path, best_dist = newPathDist
 
 
     return None if not best_path else (best_path, best_dist)
@@ -207,9 +207,18 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then raises a ValueError.
     """
-    # TODO
-    pass
-
+    startNode = Node(start)
+    endNode = Node(end)
+    try:
+        shortest_path, dist_travelled =  get_best_path(digraph, startNode, endNode,
+                                                       [], max_dist_outdoors,
+                                                       0, 0, None)
+        if dist_travelled > max_total_dist:
+            raise ValueError
+        
+        return shortest_path
+    except TypeError:
+        raise ValueError
 
 # ================================================================
 # Begin tests -- you do not need to modify anything below this line
@@ -296,9 +305,11 @@ class Ps2Test(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    digraph = load_map("sample.txt")
-    start = Node("a")
-    end = Node("c")
-    best_path = get_best_path(digraph, start, end, [], 10, 0, 0, None)
-    print(best_path)
-##    unittest.main()
+##    digraph = load_map("sample.txt")
+##    start = Node("1")
+##    end = Node("32")
+##    best_path = get_best_path(digraph, start, end, [], 15, 0, 0, None)
+##    print(best_path)
+##    digraph = load_map("mit_map.txt")
+##    print(directed_dfs(digraph, start, end, 99999999, 99999999))
+    unittest.main()
