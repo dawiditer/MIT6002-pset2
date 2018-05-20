@@ -88,10 +88,23 @@ def load_map(map_filename):
 # What is the objective function for this problem? What are the constraints?
 #
 # Answer:
+# - Objective Function: Minimize the total distance travelled between
+#   2 buildings
+# - Constraint: Total outdoor distance travelled
+#   should be less than or equal to the specified value
 #
 
+def printPath(path):
+    """Assumes path is a list of nodes"""
+    result = ''
+    for i in range(len(path)):
+        result = result + str(path[i])
+        if i != len(path) - 1:
+            result = result + '->'
+    return result
+
 # Problem 3b: Implement get_best_path
-def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
+def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist, best_dist,
                   best_path):
     """
     Finds the shortest path between buildings subject to constraints.
@@ -109,6 +122,9 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
             distance outdoors.
         max_dist_outdoors: int
             Maximum distance spent outdoors on a path
+        total_dist: int
+            Total distance travelled by a single path.
+            If path == best_path then total_dist == best_dist
         best_dist: int
             The smallest distance between the original start and end node
             for the initial problem that you are trying to solve
@@ -125,9 +141,42 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then return None.
     """
-    # TODO
-    pass
+    if not (digraph.has_node(start) and digraph.has_node(end)):
+        raise ValueError("Invalid start and/or end nodes")
 
+    path = path + [start]
+    print("Current path:", printPath(path), total_dist)
+    if start == end:
+        return path, total_dist
+
+    #To be considered
+##    if max_dist_outdoors <= 0:
+##        return None
+    
+    if max_dist_outdoors > 0:
+        for edge in digraph.get_edges_for_node(start):
+            child_node = edge.get_destination()
+            outdoor_dist = edge.get_outdoor_distance()
+            dist_travelled = edge.get_total_distance()
+            
+            if child_node not in path and outdoor_dist <= max_dist_outdoors:
+                if best_dist == 0 or total_dist < best_dist:
+                    #This evaluates to the best path. Only enter here for the best
+                    #path
+                    newPathDist = get_best_path(digraph, child_node, end, path,
+                                                max_dist_outdoors - outdoor_dist,
+                                                total_dist + dist_travelled,
+                                                best_dist, best_path)
+
+                    if newPathDist != None:
+                        best_path, best_dist = newPathDist
+
+
+    return None if not best_path else (best_path, best_dist)
+
+
+
+                   
 
 # Problem 3c: Implement directed_dfs
 def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
@@ -246,5 +295,10 @@ class Ps2Test(unittest.TestCase):
         self._test_impossible_path('10', '32', total_dist=100)
 
 
-##if __name__ == "__main__":
+if __name__ == "__main__":
+    digraph = load_map("sample.txt")
+    start = Node("a")
+    end = Node("c")
+    best_path = get_best_path(digraph, start, end, [], 10, 0, 0, None)
+    print(best_path)
 ##    unittest.main()
