@@ -104,8 +104,8 @@ def printPath(path):
     return result
 
 # Problem 3b: Implement get_best_path
-def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist, best_dist,
-                  best_path):
+def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist=0, best_dist=0,
+                  best_path=None):
     """
     Finds the shortest path between buildings subject to constraints.
 
@@ -220,6 +220,55 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
     except TypeError:
         raise ValueError
 
+
+
+
+def directed_cyclic_bfs(digraph, start, end, max_total_dist, max_dist_outdoors):
+    #([path], total_path_distance, total_path_outdoor_distance)
+    initPath = ([start], 0, 0)#Caution: 0 is a dangerous integer to work with
+    queue = [initPath]
+    bestDist = 0
+    bestPath = None
+    
+    while len(queue) != 0:
+        pathDetails = queue.pop(0)
+        currentPath, totalPathDist, totalOutdoorDist = pathDetails
+        lastNode = currentPath[-1]
+##        print("current path:", printPath(currentPath))
+        
+        #if the length of the currentPath is greater than the best path
+        #it means the search went down one level, so no need to keep searching
+        if bestPath and len(bestPath) < len(currentPath):
+            break
+        
+        if totalPathDist > max_total_dist or totalOutdoorDist > max_dist_outdoors:
+            continue
+        
+        if lastNode == end:#shortest path not necessarily best path, ie has to be shortest and best dist
+            if not bestDist or totalPathDist < bestDist:#set once or change if found better
+                bestDist = totalPathDist
+                bestPath = [node.get_name() for node in currentPath]
+##                print("found")  
+                #we continue the search along the same level/generation
+                #because the next path might contain a shorter distance
+                
+        #continue DOWN the search only if we havent found the bestPath
+        if not bestPath: 
+            for edge in digraph.get_edges_for_node(lastNode):
+                childNode = edge.get_destination()
+                newPath = currentPath + [childNode]
+                newPathDist = totalPathDist + edge.get_total_distance()
+                newOutDist = totalOutdoorDist + edge.get_outdoor_distance()
+
+                newPathDetails = (newPath, newPathDist, newOutDist)
+                if childNode not in currentPath:#if kid points back a generation, discard
+                    if newPathDist <= max_total_dist and \
+                       newOutDist <= max_dist_outdoors:
+                        queue.append(newPathDetails)
+    return bestPath
+
+
+
 # ================================================================
 # Begin tests -- you do not need to modify anything below this line
 # ================================================================
@@ -306,10 +355,12 @@ class Ps2Test(unittest.TestCase):
 
 if __name__ == "__main__":
 ##    digraph = load_map("sample.txt")
-##    start = Node("1")
-##    end = Node("32")
-##    best_path = get_best_path(digraph, start, end, [], 15, 0, 0, None)
-##    print(best_path)
-##    digraph = load_map("mit_map.txt")
-##    print(directed_dfs(digraph, start, end, 99999999, 99999999))
-    unittest.main()
+    digraph = load_map("mit_map.txt")
+    start = Node("1")
+    end = Node("32")
+    best_path_bfs = directed_cyclic_bfs(digraph, start, end, 99999, 99999)
+    best_path_dfs = directed_dfs(digraph, start, end, 99999, 99999)
+    print("Best Path by BFS:", best_path_bfs)
+    print("Best Path by DFS:", best_path_dfs)
+##    print()
+##    unittest.main()
