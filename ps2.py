@@ -8,7 +8,8 @@
 # Finding shortest paths through MIT buildings
 #
 import unittest
-from graph import Digraph, Node, WeightedEdge
+from typing import List, Tuple, Optional, Set, cast
+from graph import Digraph, Node, WeightedEdge, Edge
 
 #
 # Problem 2: Building up the Campus Map
@@ -28,7 +29,7 @@ from graph import Digraph, Node, WeightedEdge
 
 
 # Problem 2b: Implementing load_map
-def load_map(map_filename):
+def load_map(map_filename) -> Digraph:
     """
     Parses the map file and constructs a directed graph
 
@@ -46,18 +47,21 @@ def load_map(map_filename):
     Returns:
         a Digraph representing the map
     """
-    mit_map = Digraph()
+    mit_map: Digraph = Digraph()
     
     with open(map_filename) as f:
         for line in f:
-            edge_details = line.split(" ")
+            edge_details: List[str] = line.split(" ")
 
-            src = Node(edge_details[0])
-            dest = Node(edge_details[1])
-            total_distance = int(edge_details[2])
-            outdoor_distance = int(edge_details[3])
+            src: Node = Node(edge_details[0])
+            dest: Node = Node(edge_details[1])
+            total_distance: int = int(edge_details[2])
+            outdoor_distance: int = int(edge_details[3])
             
-            edge = WeightedEdge(src, dest, total_distance, outdoor_distance)
+            edge: WeightedEdge = WeightedEdge(src,
+                                              dest, 
+                                              total_distance, 
+                                              outdoor_distance)
 
             if not mit_map.has_node(src):
                 mit_map.add_node(src)
@@ -94,18 +98,28 @@ def load_map(map_filename):
 #   should be less than or equal to the specified value
 #
 
-def printPath(path):
+def printPath(path: List[Node]) -> str:
     """Assumes path is a list of nodes"""
-    result = ''
+    result: str = ''
     for i in range(len(path)):
         result = result + str(path[i])
         if i != len(path) - 1:
             result = result + '->'
     return result
 
+#TODO: Follow the spec
+    
 # Problem 3b: Implement get_best_path
-def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist=0, best_dist=0,
-                  best_path=None):
+def get_best_path(digraph: Digraph, 
+                  start: str, 
+                  end: str, 
+#                  path: List[List[str], int, int], #this is what was suppposed to be
+                  path: List[str],
+                  max_dist_outdoors: int, 
+                  total_dist: int = 0, 
+                  best_dist: int = 0,
+                  best_path: List[str] = []
+                  ) -> Optional[Tuple[List[str], int]]:
     """
     Finds the shortest path between buildings subject to constraints.
 
@@ -141,10 +155,13 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist=0, be
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then return None.
     """
-    if not (digraph.has_node(start) and digraph.has_node(end)):
+    startNode: Node = Node(start)
+    endNode: Node = Node(end)
+    
+    if not (digraph.has_node(startNode) and digraph.has_node(endNode)):
         raise ValueError("Invalid start and/or end nodes")
 
-    path = path + [start.get_name()]
+    path = path + [start]
     if start == end:
         return path, total_dist
 
@@ -153,21 +170,24 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist=0, be
 ##        return None
     
     if max_dist_outdoors >= 0:
-        for edge in digraph.get_edges_for_node(start):
-            child_node = edge.get_destination()
-            outdoor_dist = edge.get_outdoor_distance()
-            dist_travelled = edge.get_total_distance()
+        for edge in digraph.get_edges_for_node(startNode):
+            w_edge = cast(WeightedEdge, edge)
+            child_node: Node = w_edge.get_destination()
+            child = child_node.get_name()
+            outdoor_dist: int = w_edge.get_outdoor_distance()
+            dist_travelled: int = w_edge.get_total_distance()
             
-            if (child_node.get_name() not in path and outdoor_dist <= max_dist_outdoors):
+            if (child not in path and outdoor_dist <= max_dist_outdoors):
                 if best_dist == 0 or (total_dist < best_dist and len(path) <= len(best_path)):
                     #This evaluates to the best path. Only enter here for the best
                     #path
-                    newPathDist = get_best_path(digraph, child_node, end, path,
+                    newPathDist = get_best_path(digraph, child, end, path,
                                                 max_dist_outdoors - outdoor_dist,
                                                 total_dist + dist_travelled,
                                                 best_dist, best_path)
 
                     if newPathDist != None:
+                        newPathDist = cast(Tuple[List[str], int], newPathDist)
                         if (best_dist and newPathDist[1] < best_dist) or not best_dist:
                             best_path, best_dist = newPathDist
 
@@ -179,7 +199,11 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, total_dist=0, be
                    
 
 # Problem 3c: Implement directed_dfs
-def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
+def directed_dfs(digraph: Digraph, 
+                 start: str, 
+                 end: str, 
+                 max_total_dist: int, 
+                 max_dist_outdoors: int) -> Optional[List[str]]:
     """
     Finds the shortest path from start to end using a directed depth-first
     search. The total distance traveled on the path must not
@@ -207,12 +231,20 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then raises a ValueError.
     """
-    startNode = Node(start)
-    endNode = Node(end)
     try:
-        shortest_path, dist_travelled =  get_best_path(digraph, startNode, endNode,
-                                                       [], max_dist_outdoors,
-                                                       0, 0, None)
+        result: Optional[Tuple[List[str], int]] = get_best_path(digraph, 
+                                                      start, 
+                                                      end, 
+                                                      [],
+                                                      max_dist_outdoors,
+                                                      0, 0, [])
+        best_path = cast(Tuple[List[str], int], result)
+        
+        shortest_path: List[str]
+        dist_travelled: int
+        
+        shortest_path, dist_travelled = best_path
+        
         if dist_travelled > max_total_dist:
             raise ValueError
         
@@ -223,17 +255,26 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
 
 
 
-def directed_cyclic_bfs(digraph, start, end, max_total_dist, max_dist_outdoors):
+def directed_cyclic_bfs(digraph: Digraph, 
+                        start: str, 
+                        end: str, 
+                        max_total_dist: int, 
+                        max_dist_outdoors: int) -> Optional[List[str]]:
     #([path], total_path_distance, total_path_outdoor_distance)
-    initPath = ([start], 0, 0)#Caution: 0 is a dangerous integer to work with
-    queue = [initPath]
-    bestDist = 0
-    bestPath = None
+    initPath: Tuple[List[str], int, int] = ([start], 0, 0)#Caution: 0 is a dangerous integer to work with
+    queue: List[Tuple[List[str], int, int]] = [initPath]
+    bestDist: int = 0
+    bestPath: Optional[List[str]] = None
     
     while len(queue) != 0:
-        pathDetails = queue.pop(0)
+        pathDetails: Tuple[List[str], int, int] = queue.pop(0)
+        
+        currentPath: List[str]
+        totalPathDist: int
+        totalOutdoorDist: int
+        
         currentPath, totalPathDist, totalOutdoorDist = pathDetails
-        lastNode = currentPath[-1]
+        lastNode: Node = Node(currentPath[-1])
 ##        print("current path:", printPath(currentPath))
         
         #if the length of the currentPath is greater than the best path
@@ -244,10 +285,10 @@ def directed_cyclic_bfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         if totalPathDist > max_total_dist or totalOutdoorDist > max_dist_outdoors:
             continue
         
-        if lastNode == end:#shortest path not necessarily best path, ie has to be shortest and best dist
+        if lastNode.get_name() == end:#shortest path not necessarily best path, ie has to be shortest and best dist
             if not bestDist or totalPathDist < bestDist:#set once or change if found better
                 bestDist = totalPathDist
-                bestPath = [node.get_name() for node in currentPath]
+                bestPath = currentPath[:]
 ##                print("found")  
                 #we continue the search along the same level/generation
                 #because the next path might contain a shorter distance
@@ -255,12 +296,15 @@ def directed_cyclic_bfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         #continue DOWN the search only if we havent found the bestPath
         if not bestPath: 
             for edge in digraph.get_edges_for_node(lastNode):
-                childNode = edge.get_destination()
-                newPath = currentPath + [childNode]
-                newPathDist = totalPathDist + edge.get_total_distance()
-                newOutDist = totalOutdoorDist + edge.get_outdoor_distance()
+                w_edge = cast(WeightedEdge, edge)
+                childNode: Node = w_edge.get_destination()
+                newPath: List[str] = currentPath + [childNode.get_name()]
+                newPathDist: int = totalPathDist + w_edge.get_total_distance()
+                newOutDist: int = totalOutdoorDist + w_edge.get_outdoor_distance()
 
-                newPathDetails = (newPath, newPathDist, newOutDist)
+                newPathDetails: Tuple[List[str], int, int] = \
+                        (newPath, newPathDist, newOutDist)
+                        
                 if childNode not in currentPath:#if kid points back a generation, discard
                     if newPathDist <= max_total_dist and \
                        newOutDist <= max_dist_outdoors:
@@ -274,22 +318,26 @@ def directed_cyclic_bfs(digraph, start, end, max_total_dist, max_dist_outdoors):
 # ================================================================
 
 class Ps2Test(unittest.TestCase):
-    LARGE_DIST = 99999
+    LARGE_DIST: int = 99999
 
-    def setUp(self):
-        self.graph = load_map("mit_map.txt")
+    def setUp(self) -> None:
+        self.graph: Digraph = load_map("mit_map.txt")
 
-    def test_load_map_basic(self):
+    def test_load_map_basic(self) -> None:
         self.assertTrue(isinstance(self.graph, Digraph))
         self.assertEqual(len(self.graph.nodes), 37)
-        all_edges = []
+        all_edges: List[Edge] = []
         for _, edges in self.graph.edges.items():
             all_edges += edges  # edges must be dict of node -> list of edges
-        all_edges = set(all_edges)
-        self.assertEqual(len(all_edges), 129)
+        set_all_edges: Set[Edge] = set(all_edges)
+        self.assertEqual(len(set_all_edges), 129)
 
-    def _print_path_description(self, start, end, total_dist, outdoor_dist):
-        constraint = ""
+    def _print_path_description(self, 
+                                start: str, 
+                                end: str, 
+                                total_dist: int, 
+                                outdoor_dist: int):
+        constraint: str = ""
         if outdoor_dist != Ps2Test.LARGE_DIST:
             constraint = "without walking more than {}m outdoors".format(
                 outdoor_dist)
@@ -305,9 +353,12 @@ class Ps2Test(unittest.TestCase):
             start, end, constraint))
 
     def _test_path(self,
-                   expectedPath,
-                   total_dist=LARGE_DIST,
-                   outdoor_dist=LARGE_DIST):
+                   expectedPath: List[str],
+                   total_dist: int = LARGE_DIST,
+                   outdoor_dist: int = LARGE_DIST) -> None:
+        start: str
+        end: str
+        
         start, end = expectedPath[0], expectedPath[-1]
         self._print_path_description(start, end, total_dist, outdoor_dist)
         dfsPath = directed_dfs(self.graph, start, end, total_dist, outdoor_dist)
@@ -316,51 +367,52 @@ class Ps2Test(unittest.TestCase):
         self.assertEqual(expectedPath, dfsPath)
 
     def _test_impossible_path(self,
-                              start,
-                              end,
-                              total_dist=LARGE_DIST,
-                              outdoor_dist=LARGE_DIST):
+                              start: str,
+                              end: str,
+                              total_dist: int = LARGE_DIST,
+                              outdoor_dist: int = LARGE_DIST) -> None:
         self._print_path_description(start, end, total_dist, outdoor_dist)
         with self.assertRaises(ValueError):
             directed_dfs(self.graph, start, end, total_dist, outdoor_dist)
 
-    def test_path_one_step(self):
+    def test_path_one_step(self) -> None:
         self._test_path(expectedPath=['32', '56'])
 
-    def test_path_no_outdoors(self):
+    def test_path_no_outdoors(self) -> None:
         self._test_path(
             expectedPath=['32', '36', '26', '16', '56'], outdoor_dist=0)
 
-    def test_path_multi_step(self):
+    def test_path_multi_step(self) -> None:
         self._test_path(expectedPath=['2', '3', '7', '9'])
 
-    def test_path_multi_step_no_outdoors(self):
+    def test_path_multi_step_no_outdoors(self) -> None:
         self._test_path(
             expectedPath=['2', '4', '10', '13', '9'], outdoor_dist=0)
 
-    def test_path_multi_step2(self):
+    def test_path_multi_step2(self) -> None:
         self._test_path(expectedPath=['1', '4', '12', '32'])
 
-    def test_path_multi_step_no_outdoors2(self):
+    def test_path_multi_step_no_outdoors2(self) -> None:
         self._test_path(
             expectedPath=['1', '3', '10', '4', '12', '24', '34', '36', '32'],
             outdoor_dist=0)
 
-    def test_impossible_path1(self):
+    def test_impossible_path1(self) -> None:
         self._test_impossible_path('8', '50', outdoor_dist=0)
 
-    def test_impossible_path2(self):
+    def test_impossible_path2(self) -> None:
         self._test_impossible_path('10', '32', total_dist=100)
 
 
 if __name__ == "__main__":
 ##    digraph = load_map("sample.txt")
-    digraph = load_map("mit_map.txt")
-    start = Node("1")
-    end = Node("32")
-    best_path_bfs = directed_cyclic_bfs(digraph, start, end, 99999, 99999)
-    best_path_dfs = directed_dfs(digraph, start, end, 99999, 99999)
-    print("Best Path by BFS:", best_path_bfs)
-    print("Best Path by DFS:", best_path_dfs)
+    digraph: Digraph = load_map("mit_map.txt")
+    unittest.main()
+#    
+#    start: Node = Node("1")
+#    end: Node = Node("32")
+#    best_path_bfs: List[str] = directed_cyclic_bfs(digraph, start, end, 99999, 99999)
+#    best_path_dfs: List[str] = directed_dfs(digraph, start, end, 99999, 99999)
+#    print("Best Path by BFS:", best_path_bfs)
+#    print("Best Path by DFS:", best_path_dfs)
 ##    print()
-##    unittest.main()
