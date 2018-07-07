@@ -132,7 +132,7 @@ class Digraph(object):
 
 class TestGraph(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.g: Digraph = Digraph()
         self.na: Node = Node('a')
         self.nb: Node = Node('b')
@@ -147,22 +147,22 @@ class TestGraph(unittest.TestCase):
         self.g.add_edge(self.e2)
         self.g.add_edge(self.e3)
 
-    def test_weighted_edge_str(self):
+    def test_weighted_edge_str(self) -> None:
         self.assertEqual(str(self.e1), "a->b (15, 10)")
         self.assertEqual(str(self.e2), "a->c (14, 6)")
         self.assertEqual(str(self.e3), "b->c (3, 1)")
 
-    def test_weighted_edge_total_distance(self):
+    def test_weighted_edge_total_distance(self) -> None:
         self.assertEqual(self.e1.get_total_distance(), 15)
         self.assertEqual(self.e2.get_total_distance(), 14)
         self.assertEqual(self.e3.get_total_distance(), 3)
 
-    def test_weighted_edge_outdoor_distance(self):
+    def test_weighted_edge_outdoor_distance(self) -> None:
         self.assertEqual(self.e1.get_outdoor_distance(), 10)
         self.assertEqual(self.e2.get_outdoor_distance(), 6)
         self.assertEqual(self.e3.get_outdoor_distance(), 1)
 
-    def test_add_edge_to_nonexistent_node_raises(self):
+    def test_add_edge_to_nonexistent_node_raises(self) -> None:
         node_not_in_graph: Node = Node('q')
         no_src: WeightedEdge = WeightedEdge(self.nb, node_not_in_graph, 5, 5)
         no_dest: WeightedEdge = WeightedEdge(node_not_in_graph, self.na, 5, 5)
@@ -172,11 +172,11 @@ class TestGraph(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.g.add_edge(no_dest)
 
-    def test_add_existing_node_raises(self):
+    def test_add_existing_node_raises(self) -> None:
         with self.assertRaises(ValueError):
             self.g.add_node(self.na)
 
-    def test_graph_str(self):
+    def test_graph_str(self) -> None:
         expected = "a->b (15, 10)\na->c (14, 6)\nb->c (3, 1)"
         self.assertEqual(str(self.g), expected)
 
